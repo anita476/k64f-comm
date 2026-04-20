@@ -1,9 +1,3 @@
-# K64f Template Repository 
-Basic setup with some drivers for FRDM-K64f board using CMSIS SDK.
+# K64f Communication 
 
-## Drivers
-
-* Periodic Interrupt Routine Driver
-* GPIO driver
-* Timer driver
-* Switch Driver
+Communication protocol drivers/practice using k64f
