@@ -9,6 +9,7 @@
  ******************************************************************************/
 
 #include "../drivers/HAL/include/switch.h"
+#include "../drivers/MCAL/include/UART_polling.h"
 #include "../drivers/HAL/include/timer.h"
 #include "include/App_commons.h"
 #include "include/fsm_table.h"
@@ -22,6 +23,9 @@
  * */
 AppContext_t g_app_ctx = {.current_state = NULL, // set after initing tabl
 };
+
+static const char MSG[] = "The quick brown fox jumps over the lazy dog\r\n";
+static uint32_t id;
 /*******************************************************************************
  *******************************************************************************
 						GLOBAL FUNCTION DEFINITIONS
@@ -35,23 +39,37 @@ void App_Init(void) {
 	timer_drv_init();
 	FSM_InitTable();
 
+	id = UART_polling_drv_instance_init(PORTNUM2PIN(PB, 16),PORTNUM2PIN(PB, 17));
 	// initial state
 	g_app_ctx.current_state = FSM_GetInitState();
+
 }
 
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run(void) {
+	
 	while (1) {
 		timer_drv_update(); /* must be called every iteration */
 
+
+		
+
+
+
+		for (size_t i = 0; MSG[i] != '\0'; i++) {
+            UART_polling_data_transmit(id, (uint8_t)MSG[i]);
+        }
+
+
 		// Capture ONE event from all input sources
-		EVENT curr_event = App_CaptureEvent();
+		//EVENT curr_event = App_CaptureEvent();
 
 		// Feed event to FSM if theres something
-		if (curr_event != EV_NONE) {
-			g_app_ctx.current_state = fsm(g_app_ctx.current_state, curr_event);
-		}
+		//if (curr_event != EV_NONE) {
+		//	g_app_ctx.current_state = fsm(g_app_ctx.current_state, curr_event);
+		//}
 	}
+	
 }
 
 static EVENT App_CaptureEvent() {
