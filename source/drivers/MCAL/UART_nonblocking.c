@@ -13,14 +13,12 @@ typedef struct {
 	PORTMux_t alt;
 } UARTConfigNB_t;
 
-// @todo maybe add the other alternatives ?? preguntar
-static UARTConfigNB_t uart_pin_map_NB[UART_ALTS] = {{0, PB, PORTNUM2PIN(PB, 17), PORTNUM2PIN(PB, 16), PORT_mAlt3},
-													{1, PE, PORTNUM2PIN(PE, 0), PORTNUM2PIN(PE, 1), PORT_mAlt3},
-													{2, PD, PORTNUM2PIN(PD, 3), PORTNUM2PIN(PD, 2), PORT_mAlt3},
-													{3, PC, PORTNUM2PIN(PC, 17), PORTNUM2PIN(PC, 16), PORT_mAlt3},
-													{4, PE, PORTNUM2PIN(PE, 24), PORTNUM2PIN(PE, 25), PORT_mAlt3}};
-// Index is uart number, value is the index in the map it refers to
-static uint32_t uart_num_index_NB[UART_COUNT] = {INVALID_UART, INVALID_UART, INVALID_UART, INVALID_UART, INVALID_UART};
+// for now only one pin set per uart number
+static UARTConfigNB_t uart_pin_map_NB[UART_COUNT] = {{0, PB, PORTNUM2PIN(PB, 17), PORTNUM2PIN(PB, 16), PORT_mAlt3},
+													 {1, PE, PORTNUM2PIN(PE, 0), PORTNUM2PIN(PE, 1), PORT_mAlt3},
+													 {2, PD, PORTNUM2PIN(PD, 3), PORTNUM2PIN(PD, 2), PORT_mAlt3},
+													 {3, PC, PORTNUM2PIN(PC, 17), PORTNUM2PIN(PC, 16), PORT_mAlt3},
+													 {4, PE, PORTNUM2PIN(PE, 24), PORTNUM2PIN(PE, 25), PORT_mAlt3}};
 
 static UART_Type *const uart_ptrs_NB[] = UART_BASE_PTRS;
 
@@ -37,7 +35,7 @@ typedef struct {
 	uint8_t buffer[BUFFER_CHAR_SIZE];
 	uint8_t _head; /* WRITE HERE*/
 	uint8_t _tail; /* READ FROM HERE */
-				   /**********************************/
+				   /***************************************************/
 } UartBuffer_t;
 
 typedef struct {
@@ -65,7 +63,7 @@ uint32_t UART_nonblocking_drv_instance_init(pin_t RX_pin, pin_t TX_pin) {
 	}
 
 	// enable clock for the pin port
-	SIM->SCGC5 |= port_clock_masks[PIN2PORT(uart_pin_map_NB[uart_num_index_NB[id]].rx_pin)];
+	SIM->SCGC5 |= port_clock_masks[PIN2PORT(uart_pin_map_NB[id].rx_pin)];
 
 	// enable clock for uart module
 	if (id != 4) {
@@ -80,21 +78,15 @@ uint32_t UART_nonblocking_drv_instance_init(pin_t RX_pin, pin_t TX_pin) {
 	UART_nonblocking_set_baudrate(id, 9600);
 
 	/* configure rx and tx pins */
-	port_ptrs[uart_pin_map_NB[uart_num_index_NB[id]].uart_port]
-		->PCR[PIN2NUM(uart_pin_map_NB[uart_num_index_NB[id]].tx_pin)] = 0x0;
-	port_ptrs[uart_pin_map_NB[uart_num_index_NB[id]].uart_port]
-		->PCR[PIN2NUM(uart_pin_map_NB[uart_num_index_NB[id]].tx_pin)] |=
-		PORT_PCR_MUX(uart_pin_map_NB[uart_num_index_NB[id]].alt);
-	port_ptrs[uart_pin_map_NB[uart_num_index_NB[id]].uart_port]
-		->PCR[PIN2NUM(uart_pin_map_NB[uart_num_index_NB[id]].tx_pin)] |= PORT_PCR_IRQC(PORT_eDisabled);
+	port_ptrs[uart_pin_map_NB[id].uart_port]->PCR[PIN2NUM(uart_pin_map_NB[id].tx_pin)] = 0x0;
+	port_ptrs[uart_pin_map_NB[id].uart_port]->PCR[PIN2NUM(uart_pin_map_NB[id].tx_pin)] |=
+		PORT_PCR_MUX(uart_pin_map_NB[id].alt);
+	port_ptrs[uart_pin_map_NB[id].uart_port]->PCR[PIN2NUM(uart_pin_map_NB[id].tx_pin)] |= PORT_PCR_IRQC(PORT_eDisabled);
 
-	port_ptrs[uart_pin_map_NB[uart_num_index_NB[id]].uart_port]
-		->PCR[PIN2NUM(uart_pin_map_NB[uart_num_index_NB[id]].rx_pin)] = 0x0;
-	port_ptrs[uart_pin_map_NB[uart_num_index_NB[id]].uart_port]
-		->PCR[PIN2NUM(uart_pin_map_NB[uart_num_index_NB[id]].rx_pin)] |=
-		PORT_PCR_MUX(uart_pin_map_NB[uart_num_index_NB[id]].alt);
-	port_ptrs[uart_pin_map_NB[uart_num_index_NB[id]].uart_port]
-		->PCR[PIN2NUM(uart_pin_map_NB[uart_num_index_NB[id]].rx_pin)] |= PORT_PCR_IRQC(PORT_eDisabled);
+	port_ptrs[uart_pin_map_NB[id].uart_port]->PCR[PIN2NUM(uart_pin_map_NB[id].rx_pin)] = 0x0;
+	port_ptrs[uart_pin_map_NB[id].uart_port]->PCR[PIN2NUM(uart_pin_map_NB[id].rx_pin)] |=
+		PORT_PCR_MUX(uart_pin_map_NB[id].alt);
+	port_ptrs[uart_pin_map_NB[id].uart_port]->PCR[PIN2NUM(uart_pin_map_NB[id].rx_pin)] |= PORT_PCR_IRQC(PORT_eDisabled);
 
 	// enable uart transmission &&& rie interrupt
 	/*****
@@ -155,7 +147,7 @@ bool UART_nonblocking_data_receive(uint8_t uart_id, uint8_t *out) {
 		return false;
 	}
 	*out = buf_dequeue((UartBuffer_t *) &uart_state[uart_id].rx);
-	NVIC_EnableIRQ(uart_num_index_NB[uart_id]);
+	NVIC_EnableIRQ(uart_id);
 	return true;
 }
 
@@ -163,7 +155,6 @@ static uint32_t find_uart_id(pin_t tx, pin_t rx) {
 	int i = 0;
 	while (i != UART_ALTS) {
 		if (uart_pin_map_NB[i].tx_pin == tx && uart_pin_map_NB[i].rx_pin == rx) {
-			uart_num_index_NB[uart_pin_map_NB[i].uart_num] = i;
 			return uart_pin_map_NB[i].uart_num;
 		}
 		i++;
