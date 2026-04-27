@@ -1,3 +1,5 @@
+#include "include/UART.h"
+#if defined(UART_IMPL_POLLING)
 #include "include/UART_polling.h"
 #include "include/gpio.h"
 #include "include/port.h"
@@ -112,3 +114,4 @@ static uint32_t find_uart_id(pin_t tx, pin_t rx) {
 	}
 	return INVALID_UART;
 }
+#endif

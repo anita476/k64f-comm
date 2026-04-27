@@ -10,8 +10,7 @@
 
 #include "../drivers/HAL/include/switch.h"
 #include "../drivers/HAL/include/timer.h"
-#include "../drivers/MCAL/include/UART_nonblocking.h"
-#include "../drivers/MCAL/include/UART_polling.h"
+#include "../drivers/MCAL/include/UART.h"
 
 #include "include/App_commons.h"
 #include "include/fsm_table.h"

@@ -1,3 +1,5 @@
+#include "include/UART.h"
+#if defined(UART_IMPL_NONBLOCKING)
 #include "include/UART_nonblocking.h"
 #include "include/port.h"
 #define UART_ALTS 5
@@ -147,7 +149,7 @@ bool UART_nonblocking_data_receive(uint8_t uart_id, uint8_t *out) {
 		return false;
 	}
 	*out = buf_dequeue((UartBuffer_t *) &uart_state[uart_id].rx);
-	NVIC_EnableIRQ(uart_id);
+	NVIC_EnableIRQ(uart_nvim_ints_NB[uart_id]);
 	return true;
 }
 
@@ -191,6 +193,7 @@ void UART_RX_TX_ISR(uint8_t id) {
 		}
 	}
 }
+
 /************* UART INTERRUPT HANDLERS ********************/
 __ISR__ UART0_RX_TX_IRQHandler(void) {
 	UART_RX_TX_ISR(0);
@@ -237,3 +240,5 @@ static uint8_t buf_dequeue(UartBuffer_t *b) {
 	b->_tail = buf_next(b->_tail);
 	return byte;
 }
+
+#endif
